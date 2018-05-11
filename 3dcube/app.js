@@ -40,13 +40,12 @@ var init = function(){
   var program = setupProgram(gl, vertexShader, fragmentShader);
   if(!program) return;
 
-  var triangleVert = [
-    //X    Y    Z      R    G    B
-     0.0,  0.5, 0.0,   1.0, 1.0, 0.0,
-    -0.5, -0.5, 0.0,   0.7, 0.0, 1.0,
-     0.5, -0.5, 0.0,   0.1, 1.0, 1.0];
+  gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.CULL_FACE);
+  gl.frontFace(gl.CCM);
+  gl.cullFace(gl.BACK);
 
-  draw(gl, program, triangleVert);
+  draw(gl, program, boxVert);
 };
 
 function setFullScreen(canvas, gl){
@@ -63,11 +62,15 @@ function getWebGl(canvas){
   return gl;
 }
 
-function draw(gl, program, triangleVert){
-  var triangleVertBufferObj = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertBufferObj);
+function draw(gl, program, boxVert){
+  var boxVertBufferObj = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, boxVertBufferObj);
   // STATIC_DRAW = send info from cpu to gpu only once
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVert), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(boxVert), gl.STATIC_DRAW);
+
+  var boxIndexBufferObj = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, boxIndexBufferObj);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(boxIndeces), gl.STATIC_DRAW);
 
   setupVertexAttrib(gl, program, {'name': 'vertPosition',
                                  'nr_of_elem': 3,
@@ -87,7 +90,7 @@ function draw(gl, program, triangleVert){
   var viewMatrix = new Float32Array(16);
   var projectMatrix = new Float32Array(16);
   mat4.identity(worldMatrix);
-  mat4.lookAt(viewMatrix, [0,0,-5], [0,0,0], [0,1,0]);
+  mat4.lookAt(viewMatrix, [0,0,-8], [0,0,0], [0,1,0]);
   mat4.perspective(projectMatrix,glMatrix.toRadian(45), canvas.width/canvas.height, 0.1, 1000.0);
   gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
   gl.uniformMatrix4fv(matViewdUniformLocation, gl.FALSE, viewMatrix);
@@ -103,7 +106,7 @@ function draw(gl, program, triangleVert){
     //update the world matrix
     gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
     clear(gl);
-    gl.drawArrays(gl.TRIANGLES, 0, 3); // what you want to draw, skip, how many
+    gl.drawElements(gl.TRIANGLES, boxIndeces.length, gl.UNSIGNED_SHORT, 0);
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
